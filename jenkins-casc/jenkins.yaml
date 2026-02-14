@@ -1,0 +1,37 @@
+jenkins:
+  systemMessage: "Jenkins configured via JCasC with Keycloak Authentication"
+  numExecutors: 2
+  scmCheckoutRetryCount: 2
+  mode: NORMAL
+
+  # Security Realm Configuration
+  # This section configures authentication via OAuth (OpenID Connect) with Active Directory (Azure AD or ADFS)
+  securityRealm:
+    oic:
+      clientId: "${OIC_CLIENT_ID}"
+      clientSecret: "${OIC_CLIENT_SECRET}"
+      serverConfiguration:
+        wellKnown:
+          wellKnownOpenIDConfigurationUrl: "${OIC_WELL_KNOWN_URL}"
+          scopesOverride: "openid profile email"
+      userNameField: "preferred_username"
+      fullNameFieldName: "name"
+      emailFieldName: "email"
+      groupsFieldName: "groups"
+      disableSslVerification: true # Use with caution, only for local dev/lab with self-signed certs
+      logoutFromOpenidProvider: true
+
+  # Authorization Strategy
+  authorizationStrategy:
+    projectMatrix:
+      permissions:
+        # Map Keycloak 'jenkins-admins' group to Administer
+        - "Overall/Administer:jenkins-admins"
+        # Allow authenticated users read access
+        - "Overall/Read:authenticated"
+        - "Overall/Read:anonymous"
+
+unclassified:
+  location:
+    url: "https://jenkins.lab.local:8443/"
+    adminAddress: "admin@example.com"

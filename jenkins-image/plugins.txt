@@ -1,0 +1,7 @@
+configuration-as-code
+oic-auth
+matrix-auth
+workflow-aggregator
+git
+blueocean
+job-dsl

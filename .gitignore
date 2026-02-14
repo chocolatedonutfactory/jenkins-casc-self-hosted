@@ -1,0 +1,21 @@
+# Docker
+.env
+docker-compose.override.yml
+*.log
+
+# Jenkins
+jenkins-home/
+
+# Keycloak
+keycloak-data/
+!keycloak-data/*.json # Allow specific JSON realm files to be committed
+
+# PKI (Generated Certificates)
+pki-data/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

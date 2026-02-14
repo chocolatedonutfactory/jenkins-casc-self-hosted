@@ -1,0 +1,56 @@
+#!/bin/sh
+set -eu
+
+cat > /etc/nginx/conf.d/default.conf <<'EOF'
+upstream jenkins {
+  server jenkins:8080;
+}
+
+server {
+  listen 8443 ssl;
+
+  ssl_certificate     /etc/nginx/pki/server.cert.pem;
+  ssl_certificate_key /etc/nginx/pki/server.key.pem;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
+
+  client_max_body_size 64m;
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Port 8443;
+
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_read_timeout 3600;
+    proxy_send_timeout 3600;
+
+    proxy_pass http://jenkins;
+  }
+}
+
+server {
+  listen 8444 ssl;
+
+  ssl_certificate     /etc/nginx/pki/server.cert.pem;
+  ssl_certificate_key /etc/nginx/pki/server.key.pem;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
+
+  location / {
+    proxy_pass http://keycloak:8080;
+    proxy_set_header Host $host:8444; # Important: Keycloak checks this
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Port 8444;
+  }
+}
+EOF

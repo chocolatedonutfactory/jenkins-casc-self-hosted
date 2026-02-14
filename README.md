@@ -1,0 +1,57 @@
+# Jenkins Docker Compose with Keycloak OIDC Authentication
+
+This project sets up a **Jenkins** CI/CD server, a **Keycloak** Identity Provider, and an **Nginx** reverse proxy, all orchestrated with **Docker Compose**. It demonstrates a complete "Configuration as Code" setup for Jenkins security using OpenID Connect (OIDC).
+
+## Architecture
+
+*   **Jenkins:** (Port 8443) Configured via JCasC to delegate authentication to Keycloak.
+*   **Keycloak:** (Port 8444) Acts as the Identity Provider (IdP). Pre-loaded with a realm `jenkins-lab`.
+*   **Nginx:** Handles TLS termination for both Jenkins and Keycloak.
+*   **PKI:** Generates self-signed certificates for local HTTPS.
+
+## Setup & Usage
+
+### 1. Build and Start
+```bash
+docker-compose up -d --build
+```
+
+### 2. Trust Certificates
+Since we use self-signed certs, you must trust the CA.
+**Pop!_OS / Linux:**
+```bash
+sudo cp pki-data/ca.cert.pem /usr/local/share/ca-certificates/jenkins-lab-ca.crt
+sudo update-ca-certificates
+```
+**Firefox:** Import `pki-data/ca.cert.pem` into Authorities and trust it for websites.
+
+### 3. Log in
+1.  Navigate to `https://localhost:8443`.
+2.  Click **Login**. You should be redirected to `https://localhost:8444` (Keycloak).
+3.  **Credentials:**
+    *   **User:** `admin`
+    *   **Password:** `admin`
+4.  You will be logged into Jenkins as an Administrator (because the user `admin` is in the `jenkins-admins` group in Keycloak).
+
+### Keycloak Administration
+*   **URL:** `https://localhost:8444/`
+*   **Console:** Click "Administration Console".
+*   **Admin Credentials:** `admin` / `admin` (Environment variables in `docker-compose.yml`)
+
+## Configuration Details
+
+### Keycloak Realm (`keycloak-data/jenkins-lab-realm.json`)
+*   **Realm:** `jenkins-lab`
+*   **Client:** `jenkins` (Client ID: `jenkins`, Secret: `jenkins-secret`)
+*   **User:** `admin` (Password: `admin`)
+*   **Group:** `jenkins-admins` (Mapped to Jenkins "Administer" permission)
+
+### Jenkins Config (`jenkins-casc/jenkins.yaml`)
+*   **Security Realm:** OIDC plugin configured to talk to Keycloak.
+*   **Authorization:**
+    *   `Overall/Administer`: Granted to group `jenkins-admins`.
+    *   `Overall/Read`: Granted to `authenticated` users.
+
+## Troubleshooting
+*   **Redirect Loops/Errors:** Ensure `localhost` resolves correctly and the certificate is trusted by your browser.
+*   **Invalid Redirect URI:** Keycloak is strict. The redirect URI in Keycloak (`https://localhost:8443/securityRealm/finishLogin`) must match exactly what Jenkins sends.
