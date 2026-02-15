@@ -1,80 +1,51 @@
 services:
-  # Generate Private CA + TLS certs
-  pki:
-    image: alpine:3.19
-    container_name: lab_pki
-    command: ["/bin/sh", "-lc", "/pki/gen-certs.sh"]
-    volumes:
-      - ./pki/gen-certs.sh:/pki/gen-certs.sh:ro
-      - ./pki-data:/pki
-    restart: "no"
-
   # Jenkins (internal only)
   jenkins:
-    build: ./jenkins-image # Use our custom image with plugins
+    build: ./jenkins-image
     container_name: lab_jenkins
-    depends_on:
-      - pki
-      - keycloak
     networks:
       - jenkins_net
     expose:
       - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
-      - JENKINS_OPTS=--httpPort=8080
+      - JENKINS_OPTS=--httpPort=${JENKINS_HTTP_PORT}
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
-      # OIDC Configuration for Keycloak
       - OIC_CLIENT_ID=jenkins
-      - OIC_CLIENT_SECRET=jenkins-secret
+      - OIC_CLIENT_SECRET=${OIC_CLIENT_SECRET}
       - OIC_WELL_KNOWN_URL=https://jenkins.lab.local:8444/realms/jenkins-lab/.well-known/openid-configuration
-      # Since Jenkins connects to Keycloak via internal network, we might need to tweak this,
-      # but for simplicity, we'll rely on the browser side or internal DNS if set up.
-      # For now, let's assume Jenkins can reach 'localhost' if we map it, OR we use the service name.
-      # BUT: OIDC requires the 'issuer' to match.
-    volumes:
-      - ./jenkins-home:/var/jenkins_home
-      - ./jenkins-casc:/var/jenkins_home/casc_configs:ro
-      # Mount CA cert so Jenkins trusts Nginx/Keycloak
-      - ./pki-data/ca.cert.pem:/etc/ssl/certs/jenkins-lab-ca.pem:ro
-    links:
-      - "nginx:jenkins.lab.local" # Map 'nginx' service to 'jenkins.lab.local' inside this container
-    restart: unless-stopped
 
   # Keycloak Identity Provider
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_IMAGE_VERSION}
     container_name: lab_keycloak
-    command: ["start-dev", "--import-realm"] # Import realm on startup if file exists
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KC_PROXY=edge # Enable proxy mode for Nginx
-      - KC_HOSTNAME_URL=https://jenkins.lab.local:8444/ # External URL
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_PROXY=edge
+      - KC_HOSTNAME_URL=https://jenkins.lab.local:8444/
     networks:
       - jenkins_net
     expose:
       - "8080"
-    volumes:
-      - ./keycloak-data:/opt/keycloak/data/import
-    restart: unless-stopped
 
   # Nginx TLS reverse proxy
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:${NGINX_IMAGE_VERSION}
     container_name: lab_nginx
-    depends_on:
-      - pki
-      - keycloak
     networks:
       - jenkins_net
-    ports:
-      - "8443:8443" # Jenkins
-      - "8444:8444" # Keycloak
-    volumes:
-      - ./pki-data:/etc/nginx/pki:ro
-      - ./nginx/00-write-conf.sh:/docker-entrypoint.d/00-write-conf.sh:ro
-      - ./nginx-conf:/etc/nginx/conf.d
-    restart: unless-stopped
+    depends_on:
+      - keycloak
 
 networks:
   jenkins_net:

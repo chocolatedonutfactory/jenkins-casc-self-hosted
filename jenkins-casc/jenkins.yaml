@@ -27,9 +27,11 @@ jenkins:
       permissions:
         # Map Keycloak 'jenkins-admins' group to Administer
         - "Overall/Administer:jenkins-admins"
-        # Allow authenticated users read access
-        - "Overall/Read:authenticated"
-        - "Overall/Read:anonymous"
+        # Map Keycloak 'jenkins-users' group to Read access
+        - "Overall/Read:jenkins-users"
+        - 'Overall/Read:anonymous'
+        # Allow any authenticated user read access
+        # - "Overall/Read:authenticated"
 
 unclassified:
   location:

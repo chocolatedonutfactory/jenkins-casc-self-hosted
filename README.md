@@ -9,14 +9,35 @@ This project sets up a **Jenkins** CI/CD server, a **Keycloak** Identity Provide
 *   **Nginx:** Handles TLS termination for both Jenkins and Keycloak.
 *   **PKI:** Generates self-signed certificates for local HTTPS.
 
+## Prerequisites
+*   Docker
+*   Docker Compose (v2 recommended)
+
 ## Setup & Usage
 
-### 1. Build and Start
+### 1. Configure Environment
+Copy the example environment file:
 ```bash
-docker-compose up -d --build
+cp .env.example .env
 ```
+Edit `.env` to customize settings (optional).
 
-### 2. Trust Certificates
+### 2. Start the Environment
+Use the provided management script to switch between environments.
+
+**Development Environment (Bind Mounts, Debug Mode):**
+```bash
+./manage.sh dev up -d --build
+```
+This mounts local directories (`./jenkins-home`, `./keycloak-data`) for easy editing and debugging.
+
+**Production-Like Environment (Named Volumes, Optimized, Auto-Restart):**
+```bash
+./manage.sh prod up -d --build
+```
+This uses persistent Docker volumes and production settings.
+
+### 3. Trust Certificates
 Since we use self-signed certs, you must trust the CA.
 **Pop!_OS / Linux:**
 ```bash
@@ -25,7 +46,7 @@ sudo update-ca-certificates
 ```
 **Firefox:** Import `pki-data/ca.cert.pem` into Authorities and trust it for websites.
 
-### 3. Log in
+### 4. Log in
 1.  Navigate to `https://localhost:8443`.
 2.  Click **Login**. You should be redirected to `https://localhost:8444` (Keycloak).
 3.  **Credentials:**
@@ -36,7 +57,7 @@ sudo update-ca-certificates
 ### Keycloak Administration
 *   **URL:** `https://localhost:8444/`
 *   **Console:** Click "Administration Console".
-*   **Admin Credentials:** `admin` / `admin` (Environment variables in `docker-compose.yml`)
+*   **Admin Credentials:** `admin` / `admin` (Environment variables in `.env`)
 
 ## Configuration Details
 
@@ -51,6 +72,12 @@ sudo update-ca-certificates
 *   **Authorization:**
     *   `Overall/Administer`: Granted to group `jenkins-admins`.
     *   `Overall/Read`: Granted to `authenticated` users.
+
+## Documentation
+Additional setup guides are available in the `docs/` directory:
+*   [Azure AD Setup](docs/AZURE_AD_SETUP.md)
+*   [Keycloak User Management](docs/KEYCLOAK_USER_MANAGEMENT.md)
+*   [Project Overview (GEMINI)](docs/GEMINI.md)
 
 ## Troubleshooting
 *   **Redirect Loops/Errors:** Ensure `localhost` resolves correctly and the certificate is trusted by your browser.

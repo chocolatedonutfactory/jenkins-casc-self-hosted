@@ -8,6 +8,7 @@ upstream jenkins {
 
 server {
   listen 8443 ssl;
+  server_name jenkins.lab.local localhost 127.0.0.1;
 
   ssl_certificate     /etc/nginx/pki/server.cert.pem;
   ssl_certificate_key /etc/nginx/pki/server.key.pem;
@@ -37,6 +38,7 @@ server {
 
 server {
   listen 8444 ssl;
+  server_name jenkins.lab.local localhost 127.0.0.1;
 
   ssl_certificate     /etc/nginx/pki/server.cert.pem;
   ssl_certificate_key /etc/nginx/pki/server.key.pem;
