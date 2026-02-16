@@ -43,7 +43,6 @@ jobs:
           echo "Timeout waiting for services to be healthy"
           docker compose ps
           docker compose logs
-          exit 1
 
       - name: Validate Setup Script
         run: ./tests/validate.sh

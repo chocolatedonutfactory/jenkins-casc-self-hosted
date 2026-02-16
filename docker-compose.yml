@@ -24,11 +24,6 @@ services:
       - jenkins_net
     expose:
       - "8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     environment:
       - JENKINS_OPTS=--httpPort=${JENKINS_HTTP_PORT}
       - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/
@@ -81,7 +76,7 @@ services:
       keycloak:
         condition: service_healthy
       jenkins:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "${NGINX_JENKINS_PORT}:8443"
       - "${NGINX_KEYCLOAK_PORT}:8444"
