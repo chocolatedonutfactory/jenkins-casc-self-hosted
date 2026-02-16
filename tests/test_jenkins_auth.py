@@ -18,7 +18,7 @@ def get_env_vars():
     return env_vars
 
 env = get_env_vars()
-LAB_DOMAIN = env.get("LAB_DOMAIN", "jenkins.lab.local")
+LAB_DOMAIN = env.get("LAB_DOMAIN", "localhost")
 NGINX_JENKINS_PORT = env.get("NGINX_JENKINS_PORT", "8443")
 NGINX_KEYCLOAK_PORT = env.get("NGINX_KEYCLOAK_PORT", "8444")
 

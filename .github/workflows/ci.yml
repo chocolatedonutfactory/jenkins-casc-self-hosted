@@ -18,16 +18,19 @@ jobs:
       - name: Create .env
         run: cp .env.example .env
 
+      - name: Update /etc/hosts
+        run: echo "127.0.0.1 jenkins.lab.local" | sudo tee -a /etc/hosts
+
       - name: Start Environment (Dev)
         run: ./manage.sh dev up -d --build
 
       - name: Wait for Services (Docker Healthcheck)
         run: |
           echo "Waiting for Jenkins, Keycloak and Nginx to be healthy..."
-          for i in {1..30}; do
-            JENKINS_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_jenkins || echo "not-running")
-            KEYCLOAK_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_keycloak || echo "not-running")
-            NGINX_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_nginx || echo "not-running")
+          for i in {1..60}; do
+            JENKINS_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_jenkins 2>/dev/null || echo "not-running")
+            KEYCLOAK_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_keycloak 2>/dev/null || echo "not-running")
+            NGINX_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_nginx 2>/dev/null || echo "not-running")
             
             echo "Jenkins: $JENKINS_HEALTH, Keycloak: $KEYCLOAK_HEALTH, Nginx: $NGINX_HEALTH"
             
@@ -35,7 +38,7 @@ jobs:
               echo "All services are healthy!"
               exit 0
             fi
-            sleep 10
+            sleep 5
           done
           echo "Timeout waiting for services to be healthy"
           docker compose ps

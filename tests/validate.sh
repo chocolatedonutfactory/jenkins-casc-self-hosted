@@ -6,6 +6,21 @@ set -e
 
 echo "Starting validation..."
 
+# Load .env if it exists
+if [ -f .env ]; then
+  echo "Loading .env file..."
+  # Use a subshell to avoid polluting the current shell, but we want the variables here.
+  # This simple parser handles basic VAR=VAL lines.
+  set -a
+  source .env
+  set +a
+fi
+
+DOMAIN=${LAB_DOMAIN:-localhost}
+PORT_JENKINS=${NGINX_JENKINS_PORT:-8443}
+PORT_KEYCLOAK=${NGINX_KEYCLOAK_PORT:-8444}
+REALM=${KC_REALM_NAME:-jenkins-lab}
+
 # Function to check URL with retries
 check_url() {
   url=$1
@@ -28,10 +43,10 @@ check_url() {
   return 1
 }
 
-# 1. Check Jenkins Login Page (expect 200, 403, 302, or 401)
-check_url "https://jenkins.lab.local:8443/" "Jenkins"
+# 1. Check Jenkins Login Page
+check_url "https://${DOMAIN}:${PORT_JENKINS}/" "Jenkins"
 
 # 2. Check Keycloak Discovery Endpoint (Public) - Expect 200
-check_url "https://jenkins.lab.local:8444/realms/jenkins-lab/.well-known/openid-configuration" "Keycloak Discovery"
+check_url "https://${DOMAIN}:${PORT_KEYCLOAK}/realms/${REALM}/.well-known/openid-configuration" "Keycloak Discovery"
 
 echo "Environment validation successful!"
