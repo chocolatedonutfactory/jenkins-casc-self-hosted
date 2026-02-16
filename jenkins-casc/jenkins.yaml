@@ -5,7 +5,6 @@ jenkins:
   mode: NORMAL
 
   # Security Realm Configuration
-  # This section configures authentication via OAuth (OpenID Connect) with Active Directory (Azure AD or ADFS)
   securityRealm:
     oic:
       clientId: "${OIC_CLIENT_ID}"
@@ -18,22 +17,44 @@ jenkins:
       fullNameFieldName: "name"
       emailFieldName: "email"
       groupsFieldName: "groups"
-      disableSslVerification: true # Use with caution, only for local dev/lab with self-signed certs
+      disableSslVerification: true
       logoutFromOpenidProvider: true
 
-  # Authorization Strategy
+  # Authorization Strategy (Group-based)
   authorizationStrategy:
     projectMatrix:
-      permissions:
-        # Map Keycloak 'jenkins-admins' group to Administer
-        - "Overall/Administer:jenkins-admins"
-        # Map Keycloak 'jenkins-users' group to Read access
-        - "Overall/Read:jenkins-users"
-        - 'Overall/Read:anonymous'
-        # Allow any authenticated user read access
-        # - "Overall/Read:authenticated"
+      entries:
+        # Administrator Group: Full control
+        - group:
+            name: "jenkins-admins"
+            permissions:
+              - "Overall/Administer"
+        
+        # Developer Group: Can view and build jobs, but not manage Jenkins
+        - group:
+            name: "jenkins-developers"
+            permissions:
+              - "Overall/Read"
+              - "Job/Read"
+              - "Job/Build"
+              - "Job/Cancel"
+              - "Job/Workspace"
+              - "View/Read"
+
+        # User Group: Read-only access to everything
+        - group:
+            name: "jenkins-users"
+            permissions:
+              - "Overall/Read"
+              - "Job/Read"
+              - "View/Read"
+
+        # Anonymous: No access (Requires login)
+        - group:
+            name: "anonymous"
+            permissions: []
 
 unclassified:
   location:
-    url: "https://jenkins.lab.local:8443/"
+    url: "https://${LAB_DOMAIN}:${NGINX_JENKINS_PORT}/"
     adminAddress: "admin@example.com"

@@ -1,14 +1,14 @@
 #!/bin/sh
 set -eu
 
-cat > /etc/nginx/conf.d/default.conf <<'EOF'
+cat > /etc/nginx/conf.d/default.conf <<EOF
 upstream jenkins {
   server jenkins:8080;
 }
 
 server {
   listen 8443 ssl;
-  server_name jenkins.lab.local localhost 127.0.0.1;
+  server_name ${LAB_DOMAIN} localhost 127.0.0.1;
 
   ssl_certificate     /etc/nginx/pki/server.cert.pem;
   ssl_certificate_key /etc/nginx/pki/server.key.pem;
@@ -19,14 +19,14 @@ server {
   client_max_body_size 64m;
 
   location / {
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Port 8443;
+    proxy_set_header X-Forwarded-Port ${NGINX_JENKINS_PORT};
 
     proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection "upgrade";
 
     proxy_read_timeout 3600;
@@ -38,7 +38,7 @@ server {
 
 server {
   listen 8444 ssl;
-  server_name jenkins.lab.local localhost 127.0.0.1;
+  server_name ${LAB_DOMAIN} localhost 127.0.0.1;
 
   ssl_certificate     /etc/nginx/pki/server.cert.pem;
   ssl_certificate_key /etc/nginx/pki/server.key.pem;
@@ -48,11 +48,11 @@ server {
 
   location / {
     proxy_pass http://keycloak:8080;
-    proxy_set_header Host $host:8444; # Important: Keycloak checks this
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host \$host:${NGINX_KEYCLOAK_PORT}; # Important: Keycloak checks this
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Port 8444;
+    proxy_set_header X-Forwarded-Port ${NGINX_KEYCLOAK_PORT};
   }
 }
 EOF

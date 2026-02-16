@@ -49,10 +49,10 @@ sudo update-ca-certificates
 ### 4. Log in
 1.  Navigate to `https://localhost:8443`.
 2.  Click **Login**. You should be redirected to `https://localhost:8444` (Keycloak).
-3.  **Credentials:**
-    *   **User:** `admin`
-    *   **Password:** `admin`
-4.  You will be logged into Jenkins as an Administrator (because the user `admin` is in the `jenkins-admins` group in Keycloak).
+3.  **Demo Users (Lab):**
+    *   `admin` / `admin` (Full Admin - `jenkins-admins` group)
+    *   `devuser` / `password` (Developer - `jenkins-developers` group)
+    *   `normaluser` / `password` (Viewer - `jenkins-users` group)
 
 ### Keycloak Administration
 *   **URL:** `https://localhost:8444/`
@@ -75,6 +75,7 @@ sudo update-ca-certificates
 
 ## Documentation
 Additional setup guides are available in the `docs/` directory:
+*   [User Management & Authorization](docs/USER_MANAGEMENT.md) - **New: Group-based access control**
 *   [Azure AD Setup](docs/AZURE_AD_SETUP.md)
 *   [Keycloak User Management](docs/KEYCLOAK_USER_MANAGEMENT.md)
 *   [Project Overview (GEMINI)](docs/GEMINI.md)

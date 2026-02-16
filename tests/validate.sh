@@ -29,9 +29,9 @@ check_url() {
 }
 
 # 1. Check Jenkins Login Page (expect 200, 403, 302, or 401)
-check_url "https://localhost:8443/" "Jenkins"
+check_url "https://jenkins.lab.local:8443/" "Jenkins"
 
 # 2. Check Keycloak Discovery Endpoint (Public) - Expect 200
-check_url "https://localhost:8444/realms/jenkins-lab/.well-known/openid-configuration" "Keycloak Discovery"
+check_url "https://jenkins.lab.local:8444/realms/jenkins-lab/.well-known/openid-configuration" "Keycloak Discovery"
 
 echo "Environment validation successful!"

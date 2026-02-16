@@ -4,6 +4,8 @@ services:
     image: alpine:3.19
     container_name: lab_pki
     command: ["/bin/sh", "/usr/local/bin/gen-certs.sh"]
+    environment:
+      - SERVER_CN=${LAB_DOMAIN}
     volumes:
       - ./pki/gen-certs.sh:/usr/local/bin/gen-certs.sh:ro
       - ./pki-data:/pki
@@ -17,7 +19,7 @@ services:
       pki:
         condition: service_completed_successfully
       keycloak:
-        condition: service_healthy
+        condition: service_started
     networks:
       - jenkins_net
     expose:
@@ -29,10 +31,12 @@ services:
       retries: 5
     environment:
       - JENKINS_OPTS=--httpPort=${JENKINS_HTTP_PORT}
-      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/
       - OIC_CLIENT_ID=jenkins
       - OIC_CLIENT_SECRET=${OIC_CLIENT_SECRET}
-      - OIC_WELL_KNOWN_URL=http://keycloak:8080/realms/jenkins-lab/.well-known/openid-configuration
+      - OIC_WELL_KNOWN_URL=http://keycloak:8080/realms/${KC_REALM_NAME}/.well-known/openid-configuration
+      - LAB_DOMAIN=${LAB_DOMAIN}
+      - NGINX_JENKINS_PORT=${NGINX_JENKINS_PORT}
     volumes:
       - ./jenkins-home:/var/jenkins_home
       - ./jenkins-casc:/var/jenkins_home/casc_configs:ro
@@ -44,16 +48,12 @@ services:
     image: quay.io/keycloak/keycloak:${KEYCLOAK_IMAGE_VERSION}
     container_name: lab_keycloak
     command: ["start-dev", "--import-realm", "--health-enabled=true"]
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_PROXY=edge
-      - KC_HOSTNAME_URL=https://jenkins.lab.local:8444/
+      - KC_HOSTNAME_URL=https://${LAB_DOMAIN}:${NGINX_KEYCLOAK_PORT}/
+      - KC_REALM_NAME=${KC_REALM_NAME}
     networks:
       - jenkins_net
     expose:
@@ -69,23 +69,27 @@ services:
     networks:
       jenkins_net:
         aliases:
-          - jenkins.lab.local
+          - ${LAB_DOMAIN}
     depends_on:
       pki:
         condition: service_completed_successfully
       keycloak:
-        condition: service_healthy
+        condition: service_started
       jenkins:
         condition: service_healthy
     ports:
       - "${NGINX_JENKINS_PORT}:8443"
       - "${NGINX_KEYCLOAK_PORT}:8444"
+    environment:
+      - LAB_DOMAIN=${LAB_DOMAIN}
+      - NGINX_JENKINS_PORT=${NGINX_JENKINS_PORT}
+      - NGINX_KEYCLOAK_PORT=${NGINX_KEYCLOAK_PORT}
     volumes:
       - ./pki-data:/etc/nginx/pki:ro
       - ./nginx/00-write-conf.sh:/docker-entrypoint.d/00-write-conf.sh:ro
       - ./nginx-conf:/etc/nginx/conf.d
     healthcheck:
-      test: ["CMD", "wget", "--no-check-certificate", "--quiet", "--spider", "https://localhost:8443/"]
+      test: ["CMD", "curl", "-I", "-k", "https://localhost:8443/"]
       interval: 10s
       timeout: 5s
       retries: 5
