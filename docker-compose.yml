@@ -37,6 +37,11 @@ services:
       - ./jenkins-casc:/var/jenkins_home/casc_configs:ro
       - ./pki-data:/etc/pki:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k http://localhost:8080/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # Keycloak Identity Provider
   keycloak:
