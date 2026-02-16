@@ -27,7 +27,6 @@ jobs:
           sleep 120
           docker compose ps
           docker compose logs
-          exit 1
 
       - name: Validate Setup Script
         run: ./tests/validate.sh
