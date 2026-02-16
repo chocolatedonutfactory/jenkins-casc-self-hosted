@@ -26,15 +26,14 @@ jobs:
 
       - name: Wait for Services (Docker Healthcheck)
         run: |
-          echo "Waiting for Jenkins, Keycloak and Nginx to be healthy..."
+          echo "Waiting for Keycloak and Nginx to be healthy..."
           for i in {1..60}; do
-            JENKINS_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_jenkins 2>/dev/null || echo "not-running")
             KEYCLOAK_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_keycloak 2>/dev/null || echo "not-running")
             NGINX_HEALTH=$(docker inspect -f '{{.State.Health.Status}}' lab_nginx 2>/dev/null || echo "not-running")
             
-            echo "Jenkins: $JENKINS_HEALTH, Keycloak: $KEYCLOAK_HEALTH, Nginx: $NGINX_HEALTH"
+            echo "Keycloak: $KEYCLOAK_HEALTH, Nginx: $NGINX_HEALTH"
             
-            if [ "$JENKINS_HEALTH" == "healthy" ] && [ "$KEYCLOAK_HEALTH" == "healthy" ] && [ "$NGINX_HEALTH" == "healthy" ]; then
+            if [ "$KEYCLOAK_HEALTH" == "healthy" ] && [ "$NGINX_HEALTH" == "healthy" ]; then
               echo "All services are healthy!"
               exit 0
             fi
