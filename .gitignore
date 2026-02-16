@@ -19,3 +19,5 @@ pki-data/
 .vscode/
 *.swp
 *~
+package-lock.json
+package.json

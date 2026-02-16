@@ -4,7 +4,7 @@ services:
     volumes:
       - jenkins_data:/var/jenkins_home
       - ./jenkins-casc:/var/jenkins_home/casc_configs:ro
-      - ./pki-data/ca.cert.pem:/etc/ssl/certs/jenkins-lab-ca.pem:ro
+      - ./pki-data:/etc/pki:ro
     restart: always
 
   keycloak:
