@@ -1,24 +1,10 @@
 services:
-  # Generate Private CA + TLS certs (Production-like)
-  pki:
-    image: alpine:3.19
-    container_name: lab_pki
-    command: ["/bin/sh", "-lc", "/pki/gen-certs.sh"]
-    volumes:
-      - ./pki/gen-certs.sh:/pki/gen-certs.sh:ro
-      - ./pki-data:/pki
-    restart: "no"
-
+  # Production overrides
   jenkins:
-    depends_on:
-      - pki
-      - keycloak
     volumes:
       - jenkins_data:/var/jenkins_home
       - ./jenkins-casc:/var/jenkins_home/casc_configs:ro
       - ./pki-data/ca.cert.pem:/etc/ssl/certs/jenkins-lab-ca.pem:ro
-    links:
-      - "nginx:jenkins.lab.local"
     restart: always
 
   keycloak:
@@ -29,15 +15,6 @@ services:
     restart: always
 
   nginx:
-    depends_on:
-      - pki
-    ports:
-      - "${NGINX_JENKINS_PORT}:8443"
-      - "${NGINX_KEYCLOAK_PORT}:8444"
-    volumes:
-      - ./pki-data:/etc/nginx/pki:ro
-      - ./nginx/00-write-conf.sh:/docker-entrypoint.d/00-write-conf.sh:ro
-      - ./nginx-conf:/etc/nginx/conf.d
     restart: always
 
 volumes:
