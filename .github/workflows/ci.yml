@@ -22,10 +22,7 @@ jobs:
         run: echo "127.0.0.1 jenkins.lab.local" | sudo tee -a /etc/hosts
 
       - name: Start Environment (Dev)
-        run: ./manage.sh dev up -d --build
-
-      - name: Wait for Services
-        run: docker compose wait
+        run: ./manage.sh dev up -d --build --wait
 
       - name: Validate Setup Script
         run: ./tests/validate.sh
