@@ -58,3 +58,7 @@ unclassified:
   location:
     url: "https://${LAB_DOMAIN}:${NGINX_JENKINS_PORT}/"
     adminAddress: "admin@example.com"
+
+appearance:
+  themeManager:
+    theme: "dark"

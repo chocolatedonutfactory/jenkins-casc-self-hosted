@@ -5,3 +5,5 @@ workflow-aggregator
 git
 blueocean
 job-dsl
+dark-theme
+theme-manager
